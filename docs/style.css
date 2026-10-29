@@ -1,0 +1,482 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  color-scheme: dark;
+  --bg: #101719;
+  --panel: #162022;
+  --line: #2b3637;
+  --muted: #9daead;
+  --accent: #c5f281;
+}
+
+* {
+  box-sizing: border-box;
+}
+[hidden] {
+  display: none !important;
+}
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: #edf1e9;
+  font:
+    14px 'DM Sans',
+    system-ui,
+    sans-serif;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button,
+a,
+input,
+select,
+summary {
+  outline-offset: 4px;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+}
+button,
+select,
+summary {
+  cursor: pointer;
+}
+button {
+  border: 1px solid #3c4847;
+  background: #263331;
+  color: #eef5e7;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+button:hover {
+  background: #3b4c41;
+  border-color: var(--accent);
+}
+button:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent);
+}
+p {
+  line-height: 1.65;
+}
+
+/* The canvas always occupies the full viewport. Only the tool launcher overlays it. */
+#workspace {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+}
+#viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+#viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+#viewport canvas:focus {
+  outline: none;
+}
+.tool-launcher {
+  position: absolute;
+  top: max(20px, env(safe-area-inset-top));
+  right: max(20px, env(safe-area-inset-right));
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 17px;
+  border: 1px solid #ffffff35;
+  border-radius: 100px;
+  background: #162022df;
+  box-shadow: 0 4px 24px #0003;
+  backdrop-filter: blur(16px);
+  font-size: 13px;
+}
+.tool-launcher span {
+  color: var(--accent);
+  font-size: 18px;
+}
+#toolPanel {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  right: max(16px, env(safe-area-inset-right));
+  width: min(380px, calc(100% - 32px));
+  z-index: 6;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ffffff24;
+  border-radius: 16px;
+  background: #162022f5;
+  box-shadow: 0 20px 80px #0006;
+  backdrop-filter: blur(20px);
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font:
+    600 15px 'Space Grotesk',
+    sans-serif;
+  letter-spacing: 1.4px;
+}
+.mark {
+  color: var(--accent);
+  font-size: 25px;
+}
+#closePanel {
+  min-width: 38px;
+  padding: 6px 10px;
+  font-size: 21px;
+  background: transparent;
+}
+.panel-content {
+  overflow: auto;
+  padding: 22px;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.eyebrow {
+  font:
+    500 10px 'Space Grotesk',
+    sans-serif;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+h1 {
+  font:
+    500 23px 'Space Grotesk',
+    sans-serif;
+  line-height: 1.3;
+  margin: 10px 0 8px;
+}
+h2 {
+  font:
+    500 23px 'Space Grotesk',
+    sans-serif;
+  margin: 8px 0 12px;
+}
+.scene-caption p {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+#message {
+  font-size: 11px;
+  padding: 10px 12px;
+  background: #101719;
+  border: 1px solid #52634c;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+  margin: 12px 0;
+}
+#message:empty {
+  display: none;
+}
+#message.error {
+  border-color: #e9a88b;
+  color: #f5d2bb;
+}
+.viewport-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 20px;
+}
+.viewport-actions button {
+  font-size: 11px;
+  padding: 9px;
+  flex-grow: 1;
+}
+.dataset-notice {
+  padding: 12px;
+  border: 1px solid #7a7054;
+  border-radius: 8px;
+  color: #f5dfb7;
+  font-size: 12px;
+}
+
+details {
+  border-top: 1px solid var(--line);
+  padding: 17px 0;
+}
+summary {
+  color: var(--muted);
+  font-size: 12px;
+  list-style: none;
+  display: flex;
+  gap: 12px;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+summary b {
+  color: #e2eae5;
+  font-weight: 500;
+  font-size: 13px;
+}
+summary::after {
+  content: '+';
+  margin-left: auto;
+}
+details[open] > summary::after {
+  content: '−';
+}
+label {
+  display: block;
+  font-size: 12px;
+  margin: 17px 0 8px;
+  color: #c2ceca;
+}
+input[type='text'],
+input[type='url'],
+input[type='number'],
+select {
+  width: 100%;
+  background: #10191b;
+  border: 1px solid #344342;
+  color: #e1e9e4;
+  border-radius: 7px;
+  padding: 11px 10px;
+  font-size: 12px;
+  min-width: 0;
+}
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 5px;
+  margin: 12px 0;
+  cursor: pointer;
+}
+input[type='checkbox'],
+input[type='color'] {
+  float: right;
+  accent-color: var(--accent);
+}
+input[type='color'] {
+  width: 33px;
+  height: 23px;
+  border: 0;
+  background: none;
+}
+output {
+  float: right;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.row {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+.row > div {
+  min-width: 0;
+  flex: 1;
+}
+.row button {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.hint {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+.file-button {
+  position: relative;
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border: 1px dashed #58694c;
+  border-radius: 7px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.file-button input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.file-button:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.objects {
+  display: grid;
+  gap: 8px;
+}
+.object {
+  border: 1px solid #35423f;
+  border-radius: 8px;
+  padding: 12px;
+}
+.object .name {
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 7px;
+  align-items: center;
+  overflow-wrap: anywhere;
+}
+.object button {
+  padding: 3px 6px;
+  font-size: 11px;
+}
+.object label {
+  margin: 10px 0 5px;
+  font-size: 11px;
+}
+.object .transforms {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+.object input[type='number'] {
+  padding: 6px;
+  font-size: 11px;
+}
+#seqStatus {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+#seqFrame {
+  margin-top: 14px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+#sequencePanel details {
+  margin-top: 12px;
+}
+.hud {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 20px 0;
+}
+.hud b {
+  display: block;
+  font:
+    500 18px 'Space Grotesk',
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.hud span {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.metric {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--muted);
+}
+.metric b {
+  color: #edf1e9;
+  white-space: nowrap;
+}
+.wide {
+  width: 100%;
+}
+footer {
+  font-size: 10px;
+  line-height: 1.9;
+  color: var(--muted);
+  padding: 18px 0 0;
+  border-top: 1px solid var(--line);
+}
+footer a {
+  color: var(--accent);
+}
+.footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.footer-actions button {
+  font-size: 12px;
+}
+
+dialog {
+  max-width: 640px;
+  width: 90%;
+  max-height: 85dvh;
+  overflow: auto;
+  background: #182322;
+  color: #e0e9e4;
+  border: 1px solid #546348;
+  border-radius: 15px;
+  padding: 28px;
+  line-height: 1.6;
+}
+dialog::backdrop {
+  background: #060b10b8;
+  backdrop-filter: blur(6px);
+}
+dialog p {
+  font-size: 13px;
+}
+dialog code {
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+dialog a {
+  color: var(--accent);
+}
+.close {
+  float: right;
+}
+@media (max-width: 480px) {
+  #toolPanel {
+    top: 8px;
+    bottom: 8px;
+    right: 8px;
+    width: calc(100% - 16px);
+  }
+  .panel-content {
+    padding: 18px;
+  }
+  .tool-launcher {
+    top: 12px;
+    right: 12px;
+  }
+}

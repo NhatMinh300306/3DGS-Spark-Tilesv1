@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Splat Lab · Scene gallery &amp; dynamic 3DGS</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+          "@sparkjsdev/spark": "https://sparkjs.dev/releases/spark/2.3.1/spark.module.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main id="workspace">
+      <section id="viewport" aria-label="Khung nhìn 3D"></section>
+      <button
+        id="togglePanel"
+        class="tool-launcher"
+        aria-expanded="false"
+        aria-controls="toolPanel"
+        title="Mở công cụ (phím H)"
+      >
+        <span aria-hidden="true">☰</span>
+        Công cụ
+      </button>
+      <aside id="toolPanel" aria-label="Công cụ xem cảnh" hidden>
+        <header class="panel-header">
+          <a class="brand" href="./">
+            <span class="mark">✳</span>
+            SPLAT LAB
+          </a>
+          <button id="closePanel" aria-label="Đóng công cụ" title="Đóng (phím H hoặc Escape)">
+            ×
+          </button>
+        </header>
+        <div class="panel-content">
+          <div class="scene-caption">
+            <span class="eyebrow">SCENE EXPLORER</span>
+            <h1 id="sceneTitle">Khám phá không gian</h1>
+            <p id="credit">Spark · Gaussian splatting</p>
+          </div>
+          <label for="scenePicker">Cảnh đang xem</label>
+          <div class="row">
+            <select id="scenePicker" aria-label="Đổi scene"></select>
+            <button id="reloadScene" aria-label="Tải lại scene" title="Tải lại scene">↻</button>
+          </div>
+          <p id="datasetNotice" class="dataset-notice" role="status" hidden></p>
+          <div id="message" role="status">Đang khởi tạo WebGL2…</div>
+          <div class="viewport-actions">
+            <button id="home" title="Trở lại góc nhìn ban đầu">⌂ Góc nhìn đầu</button>
+            <button id="orbit">↻ Tự xoay</button>
+            <button id="full">⛶ Toàn màn hình</button>
+          </div>
+          <details>
+            <summary>
+              01
+              <b>Mở thêm dữ liệu</b>
+            </summary>
+            <label for="url">URL dữ liệu</label>
+            <input id="url" placeholder="https://…/scene-lod.rad" type="url" />
+            <div class="row">
+              <select id="mode" aria-label="Chế độ tải">
+                <option value="auto">Tự động theo đuôi file</option>
+                <option value="paged">RAD streaming</option>
+                <option value="lod">Tạo LoD tại client</option>
+              </select>
+              <button id="loadUrl">Thêm</button>
+            </div>
+            <label class="file-button">
+              ＋ Mở file từ máy
+              <input
+                id="files"
+                type="file"
+                multiple
+                accept=".ply,.spz,.splat,.ksplat,.sog,.zip,.rad"
+              />
+            </label>
+            <p class="hint">
+              File trên máy được xử lý trong trình duyệt. RAD chia chunk cần URL có đủ các file
+              .radc.
+            </p>
+            <label for="demo">Scene từ Spark · đổi ngay khi chọn</label>
+            <div class="row">
+              <select id="demo">
+                <option value="" selected disabled>Chọn cảnh mẫu để thử…</option>
+                <option value="spaceship">Cozy Spaceship · 6M</option>
+                <option value="hobbit">Hobbiton · 24M</option>
+                <option value="tower">Coit Tower · 40M</option>
+                <option value="poland">Poland · 100M</option>
+                <option value="butterfly">Butterfly · LoD tại client</option>
+              </select>
+              <button id="loadDemo" disabled>Mở</button>
+            </div>
+            <div id="objects" class="objects"></div>
+          </details>
+          <details open id="sequencePanel">
+            <summary>
+              ▶
+              <b>Dynamic · Tiles / RAD / PLY</b>
+            </summary>
+            <p class="hint">
+              Chọn Redandblack Tiles, RAD hoặc PLY trong danh sách cảnh để phát dữ liệu có sẵn. Các
+              tùy chọn dưới đây cho phép mở thêm chuỗi riêng.
+            </p>
+            <details>
+              <summary>Mở thêm chuỗi của bạn</summary>
+              <label for="tileManifest">URL danh sách tile (tiles.json)</label>
+              <input id="tileManifest" type="url" value="./data/redandblack_tiles/tiles.json" />
+              <button id="loadTileManifest" class="wide">Mở chuỗi tile</button>
+              <p class="hint">
+                Mỗi layer là một resolution. Các PLY trong cùng frame được hiển thị cùng nhau.
+              </p>
+              <label class="file-button">
+                ＋ Chọn thư mục redandblack-pages
+                <input id="seqFolder" type="file" webkitdirectory multiple />
+              </label>
+              <p class="hint">
+                Nhập PLY từ máy. Với RAD và RADC, đặt dữ liệu trong thư mục web rồi chọn cảnh hoặc
+                mở qua URL bên dưới.
+              </p>
+              <label for="seqAssign">Gán resolution khi chọn file rời</label>
+              <select id="seqAssign">
+                <option>res8</option>
+                <option>res4</option>
+                <option>res2</option>
+                <option>res1</option>
+              </select>
+              <label class="file-button">
+                ＋ Chọn nhiều PLY cho resolution này
+                <input id="seqFiles" type="file" accept=".ply" multiple />
+              </label>
+              <details>
+                <summary>Mở chuỗi qua URL</summary>
+                <label for="seqFormat">Định dạng frame</label>
+                <select id="seqFormat">
+                  <option value="rad">RAD · LoD streaming</option>
+                  <option value="ply">PLY</option>
+                </select>
+                <label for="seqPattern">Mẫu tên file · {frame} là số frame</label>
+                <input id="seqPattern" type="text" value="{frame}-lod.rad" />
+                <label for="seqResList">Các resolution có trên server</label>
+                <input id="seqResList" type="text" value="res1,res2,res4,res8" />
+                <label for="seqBase">Thư mục chứa res1/res2/res4/res8</label>
+                <input id="seqBase" type="url" value="./data/redandblack-pages/" />
+                <div class="row">
+                  <div>
+                    <label for="seqStart">Frame đầu</label>
+                    <input id="seqStart" type="number" value="1450" min="0" />
+                  </div>
+                  <div>
+                    <label for="seqEnd">Frame cuối</label>
+                    <input id="seqEnd" type="number" value="1479" min="0" />
+                  </div>
+                </div>
+                <button id="seqRemote" class="wide">Mở bộ dữ liệu từ URL</button>
+                <p class="hint">
+                  Ví dụ: res8/001450-lod.rad hoặc res8/001450.rad. Giữ toàn bộ .radc đi kèm trong
+                  đúng thư mục.
+                </p>
+              </details>
+            </details>
+            <label for="seqResolution">Resolution đang phát</label>
+            <select id="seqResolution" aria-label="Resolution đang phát"></select>
+            <div class="row">
+              <button id="seqPlay">▶ Phát</button>
+              <button id="seqFit">Vừa khung</button>
+              <button id="seqClear">Đóng chuỗi</button>
+            </div>
+            <div id="seqFrame">Chưa có chuỗi</div>
+            <input
+              id="seqSeek"
+              aria-label="Chọn frame"
+              type="range"
+              min="0"
+              max="0"
+              value="0"
+              step="1"
+            />
+            <div class="row">
+              <div>
+                <label for="seqFPS">FPS mục tiêu</label>
+                <input id="seqFPS" type="number" min="1" max="60" value="30" />
+              </div>
+              <div>
+                <label for="seqBuffer">Buffer (frame)</label>
+                <input id="seqBuffer" type="number" min="2" max="10" value="4" />
+              </div>
+            </div>
+            <label>
+              Lặp lại
+              <input id="seqLoop" type="checkbox" checked />
+            </label>
+            <label for="seqRotation">Xoay X cả chuỗi (độ)</label>
+            <input id="seqRotation" type="number" value="0" step="90" />
+            <p id="seqStatus" role="status">Đang mở scene mặc định…</p>
+            <p id="seqStats" class="hint"></p>
+            <p id="tileStats" class="hint" role="status" hidden></p>
+            <label for="tileConcurrency">Số tile tải song song</label>
+            <input id="tileConcurrency" type="number" min="1" max="6" value="3" step="1" />
+            <p class="hint">
+              Áp dụng cho frame tile tiếp theo. Mỗi frame tải đủ tile; lỗi tải sẽ giữ frame hiện
+              tại. Các tile rỗng được bỏ qua.
+            </p>
+            <p class="hint">
+              Giữ frame hiện tại khi frame tiếp theo chưa sẵn sàng. RAD tải chi tiết theo góc nhìn;
+              buffer nhỏ giúp giảm thời gian chờ ban đầu. Nếu nhân vật nằm ngang, thử X = −90° rồi
+              bấm Vừa khung.
+            </p>
+          </details>
+          <details>
+            <summary>
+              02
+              <b>LoD & foveation</b>
+            </summary>
+            <p class="hint">
+              Áp dụng cho RAD động và các cảnh LoD. Resolution chọn bộ dữ liệu; LoD chọn chi tiết
+              trong bộ dữ liệu đó. PLY tiles hiện tải đủ tile của frame, không dùng các thanh LoD
+              này để giảm số tile.
+            </p>
+            <label>
+              Ngân sách splat
+              <output id="budgetOut">1.00×</output>
+            </label>
+            <input id="budget" type="range" min="0.1" max="2" step="0.05" value="1" />
+            <p class="hint">Hệ số trên ngân sách mặc định của thiết bị.</p>
+            <label>
+              Ưu tiên theo hướng nhìn
+              <input id="foveation" type="checkbox" checked />
+            </label>
+            <label>
+              Góc chi tiết đầy đủ
+              <output id="coneOut">70°</output>
+            </label>
+            <input id="cone" type="range" min="20" max="120" step="5" value="70" />
+            <label>
+              Chi tiết phía sau
+              <output id="behindOut">0.20</output>
+            </label>
+            <input id="behind" type="range" min="0.05" max="1" step="0.05" value="0.2" />
+            <label>
+              Tải thêm chunk
+              <input id="fetch" type="checkbox" checked />
+            </label>
+          </details>
+          <details>
+            <summary>
+              03
+              <b>Hình ảnh & điều khiển</b>
+            </summary>
+            <label>
+              Độ phân giải render
+              <output id="pixelOut">1.0×</output>
+            </label>
+            <input id="pixel" type="range" min="0.5" max="2" step="0.25" value="1" />
+            <label>
+              Phạm vi Gaussian
+              <output id="stdOut">2.83σ</output>
+            </label>
+            <input id="std" type="range" min="1.5" max="3" step="0.05" value="2.83" />
+            <label for="navigation">Điều khiển camera</label>
+            <select id="navigation">
+              <option value="fly">SparkControls · khám phá không gian</option>
+              <option value="orbit" selected>OrbitControls · xoay quanh đối tượng</option>
+            </select>
+            <label>
+              Tốc độ di chuyển (Orbit)
+              <output id="speedOut">3</output>
+            </label>
+            <input id="speed" type="range" min="0.2" max="20" step="0.2" value="3" />
+            <label>
+              Màu nền
+              <input id="background" type="color" value="#101719" />
+            </label>
+          </details>
+          <details>
+            <summary>
+              04
+              <b>Đo hiệu năng</b>
+            </summary>
+            <div class="hud">
+              <div>
+                <b id="fps">—</b>
+                <span>FPS RENDER</span>
+              </div>
+              <div>
+                <b id="splats">—</b>
+                <span>SPLATS ĐƯỢC CHỌN</span>
+              </div>
+              <div>
+                <b id="pages">—</b>
+                <span>PAGES GPU</span>
+              </div>
+            </div>
+            <div class="metric">
+              <span>Frame time CPU + chờ trình duyệt</span>
+              <b id="frametime">—</b>
+            </div>
+            <div class="metric">
+              <span>Worker đang fetch/decode</span>
+              <b id="workers">—</b>
+            </div>
+            <div class="metric">
+              <span>Khởi tạo đối tượng gần nhất</span>
+              <b id="loadtime">—</b>
+            </div>
+            <div class="metric">
+              <span>Ngân sách splat mục tiêu</span>
+              <b id="target">—</b>
+            </div>
+            <button id="csv" class="wide">↓ Xuất số đo CSV</button>
+            <p class="hint">
+              Mẫu mỗi giây, giữ tối đa 3.600 mẫu. Không phải GPU timer; thời gian khởi tạo RAD không
+              phải tải xong cả cảnh.
+            </p>
+          </details>
+          <footer>
+            <div class="footer-actions">
+              <a href="source.zip" download>↓ Source code</a>
+              <button id="help">Hướng dẫn</button>
+            </div>
+            <p>Kéo để xoay · Cuộn để zoom · H để đóng/mở công cụ</p>
+            <a href="https://sparkjs.dev/examples/streaming-lod/" target="_blank" rel="noreferrer">
+              Cảnh mẫu &amp; nguồn Spark ↗
+            </a>
+            <p>Spark 2.3.1 + Three.js · Nguyễn Nhật Minh</p>
+          </footer>
+        </div>
+      </aside>
+      <dialog id="guide">
+        <button id="closeGuide" class="close">Đóng ×</button>
+        <span class="eyebrow">QUICK START</span>
+        <h2>Cảnh 3D, không gian trọn vẹn</h2>
+        <p>
+          Bấm Công cụ hoặc phím H để chọn cảnh, resolution và điều khiển phát. Đóng bảng để chỉ xem
+          cảnh. Phím Space phát/tạm dừng chuỗi khi con trỏ ở vùng xem.
+        </p>
+        <h2>Dữ liệu layer / frame / tile</h2>
+        <p>
+          Giữ cấu trúc
+          <code>layer_1/frame_1450/voxels_new/*.ply</code>
+          . Các layer là những bản resolution độc lập, không cộng dồn.
+        </p>
+        <p>
+          Đặt dữ liệu trong
+          <code>dist/data/redandblack_tiles</code>
+          , chạy
+          <code>py configure_tiles.py</code>
+          rồi chọn
+          <b>Redandblack · PLY tiles</b>
+          . Nếu dữ liệu đang ở Downloads, xem lệnh
+          <code>--input ... --copy</code>
+          trong README.
+        </p>
+        <p>
+          Không cần ghép PLY hay chuyển RAD. Web tải từng tile qua HTTP, giữ cùng hệ tọa độ, và
+          chuyển cả nhóm khi frame kế tiếp sẵn sàng. Mặc định giữ buffer 2 frame.
+        </p>
+        <h2>Đặt chuỗi RAD vào web</h2>
+        <p>
+          Giữ cấu trúc
+          <code>dist/data/redandblack-pages/res8/001450-lod.rad</code>
+          cùng các file
+          <code>001450-lod-*.radc</code>
+          . Làm tương tự với res1, res2, res4 và các frame 001450–001479.
+        </p>
+        <p>
+          Nếu tên file khác, chạy
+          <code>py configure_dataset.py</code>
+          tại thư mục project. Web tự đọc danh sách được tạo ra, không cần người xem chọn file.
+        </p>
+        <p>
+          Chạy
+          <code>py serve.py --bind 127.0.0.1 --port 8765 --directory dist</code>
+          , mở
+          <code>http://127.0.0.1:8765/</code>
+          , chọn Redandblack RAD. Chạy
+          <code>py prepare_pages.py</code>
+          để chép web và dữ liệu sang docs.
+        </p>
+        <h2>Phát dynamic &amp; LoD</h2>
+        <p>
+          RAD được stream theo góc nhìn trong từng frame. Bộ phát tải trước một số frame, chờ có
+          splat được chọn rồi mới chuyển. Chất lượng có thể tăng dần khi các chunk tiếp tục tải.
+        </p>
+        <p>
+          30 frame không bảo đảm 30 FPS. FPS render khác FPS đổi nội dung. Tăng buffer dùng thêm
+          RAM/VRAM và có thể làm giảm hiệu năng.
+        </p>
+        <p>
+          RAD gộp cần HTTP Range đúng (206); RAD chia chunk cần đủ RADC. Server khác origin cần
+          CORS. Chưa tích hợp CAGS/Draco hoặc ABR/DASH.
+        </p>
+        <a href="README.md" target="_blank">Đọc hướng dẫn đầy đủ →</a>
+      </dialog>
+    </main>
+    <script type="module" src="ui.js"></script>
+  </body>
+</html>
